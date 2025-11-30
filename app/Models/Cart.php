@@ -20,4 +20,14 @@ class Cart extends Model
         'total_amount' => 'decimal:2',
         'checked_out_at' => 'datetime',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

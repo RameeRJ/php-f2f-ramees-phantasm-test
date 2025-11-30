@@ -1,8 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CartController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -14,26 +17,49 @@ use App\Http\Controllers\Api\ProductController;
 |
 */
 
-Route::group(['prefix' => 'auth'], function () {
-    Route::post('register', [AuthController::class, 'register']);
-    Route::post('login', [AuthController::class, 'login']);
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::get('me', [AuthController::class, 'me']);
-});
-
-Route::middleware('auth:api')->group(function () {
-    Route::get('user', function () {
-        return auth()->user();
+// Authentication routes (public)
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    // Protected auth routes
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/refresh', [AuthController::class, 'refresh']);
+        Route::get('/me', [AuthController::class, 'me']);
     });
 });
 
-// Protected routes example
-Route::middleware('auth:api')->group(function () {
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index']);
+// Product routes
+Route::prefix('products')->group(function () {
+    // Public routes - anyone can view products
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/{id}', [ProductController::class, 'show']);
+    
+    // Protected routes - requires authentication
+    Route::middleware('auth:api')->group(function () {
         Route::post('/', [ProductController::class, 'store']);
-        Route::get('/{id}', [ProductController::class, 'show']);
     });
+});
 
+// Cart routes (all protected - require JWT authentication)
+Route::prefix('cart')->middleware('auth:api')->group(function () {
+    // View cart
+    Route::get('/', [CartController::class, 'getCart']);
+    
+    // Get cart count (useful for navbar badge)
+    Route::get('/count', [CartController::class, 'getCartCount']);
+    
+    // Add product to cart
+    Route::post('/add', [CartController::class, 'addToCart']);
+    
+    // Update cart item quantity
+    Route::put('/items/{itemId}', [CartController::class, 'updateCartItem']);
+    Route::patch('/items/{itemId}', [CartController::class, 'updateCartItem']);
+    
+    // Remove single item from cart
+    Route::delete('/items/{itemId}', [CartController::class, 'removeCartItem']);
+    
+    // Clear entire cart
+    Route::delete('/clear', [CartController::class, 'clearCart']);
 });
