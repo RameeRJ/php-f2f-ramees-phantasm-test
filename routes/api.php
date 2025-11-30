@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\ProductController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -22,9 +22,18 @@ Route::group(['prefix' => 'auth'], function () {
     Route::get('me', [AuthController::class, 'me']);
 });
 
-// Protected routes example
 Route::middleware('auth:api')->group(function () {
     Route::get('user', function () {
         return auth()->user();
     });
+});
+
+// Protected routes example
+Route::middleware('auth:api')->group(function () {
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductController::class, 'index']);
+        Route::post('/', [ProductController::class, 'store']);
+        Route::get('/{id}', [ProductController::class, 'show']);
+    });
+
 });
